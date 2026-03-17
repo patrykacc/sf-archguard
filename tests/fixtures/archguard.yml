@@ -1,0 +1,24 @@
+layers:
+  - name: integration
+    dependsOn: [service, shared]
+  - name: service
+    dependsOn: [shared]
+  - name: shared
+    dependsOn: []
+
+packages:
+  billing:
+    path: force-app/main/default/billing
+    layer: service
+  payments:
+    path: force-app/main/default/payments
+    layer: integration
+    dependsOn: [billing]
+  common:
+    path: force-app/main/default/common
+    layer: shared
+
+rules:
+  enforcePackageBoundaries: true
+  enforceObjectBoundaries: true
+  exclude: []

@@ -1,0 +1,74 @@
+# SF-ArchGuard Configuration Example
+#
+# This file defines the architectural rules for your Salesforce SFDX project.
+# Place as `archguard.yml` in your project root.
+
+# ─── Layer Definitions ────────────────────────────────────────
+# Layers define the dependency direction. A layer can only depend
+# on layers listed in its `dependsOn` array.
+#
+# Example hierarchy:
+#   integration → service → domain → shared
+#   (integration can use service & shared, but not the reverse)
+
+layers:
+  - name: integration
+    dependsOn: [service, shared]
+
+  - name: service
+    dependsOn: [domain, shared]
+
+  - name: domain
+    dependsOn: [shared]
+
+  - name: shared
+    dependsOn: []
+
+# ─── Package Definitions ─────────────────────────────────────
+# Each package maps to a folder in your SFDX project.
+# - `path`: relative path from project root
+# - `layer`: which architectural layer this package belongs to
+# - `dependsOn`: explicit cross-package dependencies (optional)
+#   Use this for specific exceptions beyond layer rules.
+
+packages:
+  billing:
+    path: force-app/main/default/billing
+    layer: service
+
+  payments:
+    path: force-app/main/default/payments
+    layer: integration
+    dependsOn: [billing]   # payments can explicitly use billing classes
+
+  crm:
+    path: force-app/main/default/crm
+    layer: service
+
+  notifications:
+    path: force-app/main/default/notifications
+    layer: integration
+    dependsOn: [crm]
+
+  core-domain:
+    path: force-app/main/default/core-domain
+    layer: domain
+
+  common:
+    path: force-app/main/default/common
+    layer: shared
+
+# ─── Global Rules ─────────────────────────────────────────────
+
+rules:
+  # Enforce that Apex classes respect package boundaries
+  enforcePackageBoundaries: true
+
+  # Enforce that custom objects respect package boundaries
+  enforceObjectBoundaries: true
+
+  # Exclude test classes and mocks from analysis
+  exclude:
+    - "**/*Test.cls"
+    - "**/*Mock.cls"
+    - "**/*TestDataFactory.cls"
