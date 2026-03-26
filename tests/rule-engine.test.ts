@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { loadConfig } from '../src/config/config-loader';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import { buildDependencyGraph } from '../src/graph/dependency-graph';
 import { evaluateRules } from '../src/rules/rule-engine';
 import { ArchGuardConfig, DependencyGraph } from '../src/types';

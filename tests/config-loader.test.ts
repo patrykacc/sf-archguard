@@ -1,7 +1,10 @@
 import { describe, it, expect } from '@jest/globals';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 import { loadConfig, ConfigValidationError } from '../src/config/config-loader';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('ConfigLoader', () => {
   const fixturesPath = path.resolve(__dirname, 'fixtures');

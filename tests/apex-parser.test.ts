@@ -1,6 +1,9 @@
 import { describe, it, expect } from '@jest/globals';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { parseApexPackage } from '../src/parsers/apex-parser';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('ApexParser', () => {
   const fixturesPath = path.resolve(__dirname, 'fixtures');
