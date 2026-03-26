@@ -10,12 +10,13 @@ SF-ArchGuard focuses exclusively on **structural and architectural rules**. It d
 - **Package boundaries** — Apex classes can only reference classes from the same package, an allowed layer, or an explicitly declared dependency
 - **Object boundaries** — Custom object lookups and master-detail relationships respect the same package/layer rules
 
-## Quick Start
+## Installation
 
 ```bash
-npm install
-npm run build
+sf plugins install sf-archguard
 ```
+
+## Quick Start
 
 Create an `archguard.yml` in your SFDX project root (see `archguard.example.yml` for a full template):
 
@@ -52,28 +53,33 @@ Run the analysis:
 
 ```bash
 # Console output (default)
-npx sf-archguard --project /path/to/sfdx-project
+sf archguard enforce
+
+# Target a specific project directory
+sf archguard enforce --project-dir /path/to/sfdx-project
 
 # Verbose mode with detailed messages
-npx sf-archguard --verbose
+sf archguard enforce --verbose
 
 # JSON output for scripting
-npx sf-archguard --format json --output report.json
+sf archguard enforce --format json --output report.json
 
 # JUnit XML for CI pipelines (Jenkins, GitHub Actions, GitLab CI)
-npx sf-archguard --format junit --output archguard-report.xml
+sf archguard enforce --format junit --output archguard-report.xml
 ```
 
-## CLI Options
+## Command Reference
 
-| Flag | Description | Default |
-|---|---|---|
-| `-p, --project <path>` | SFDX project root directory | Current directory |
-| `-c, --config <path>` | Path to `archguard.yml` | Auto-detected in project root |
-| `-f, --format <format>` | Output: `console`, `json`, or `junit` | `console` |
-| `-o, --output <path>` | Write report to file (json/junit) | stdout |
-| `-v, --verbose` | Show full violation messages | `false` |
-| `--fail-on-violation` | Exit code 1 on violations | `true` |
+### `sf archguard enforce`
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--project-dir <path>` | `-p` | SFDX project root directory | Current directory |
+| `--config <path>` | `-c` | Path to `archguard.yml` | Auto-detected in project root |
+| `--format <format>` | `-f` | Output: `console`, `json`, or `junit` | `console` |
+| `--output <path>` | `-o` | Write report to file (json/junit) | stdout |
+| `--verbose` | `-v` | Show full violation messages | `false` |
+| `--[no-]fail-on-violation` | | Exit code 1 on violations | `true` |
 
 ## How Dependency Rules Work
 
@@ -108,25 +114,6 @@ Same-package references are always allowed — classes within a single package c
 - Master-Detail relationships (`referenceTo`)
 - Formula field object references (`Object__c.Field__c` patterns)
 
-## Project Structure
-
-```
-src/
-  config/config-loader.ts    # YAML config parsing and validation
-  parsers/
-    apex-parser.ts           # Apex .cls and .trigger dependency extraction
-    object-parser.ts         # Custom object/field metadata parsing
-  graph/dependency-graph.ts  # Unified dependency graph builder
-  rules/rule-engine.ts       # Rule evaluation (layer, package, object boundaries)
-  reporters/
-    console-reporter.ts      # Colored terminal output
-    json-reporter.ts         # Structured JSON output
-    junit-reporter.ts        # JUnit XML for CI systems
-  analyzer.ts                # Orchestrates the full pipeline
-  cli.ts                     # CLI entry point
-  types.ts                   # Shared type definitions
-```
-
 ## Programmatic API
 
 SF-ArchGuard can be used as a library in custom scripts or SFDX plugins:
@@ -136,6 +123,7 @@ import { analyze } from 'sf-archguard';
 
 const result = await analyze({
   projectRoot: '/path/to/sfdx-project',
+  configPath: 'archguard.yml',  // optional, auto-detected if omitted
   verbose: true,
 });
 
@@ -148,13 +136,7 @@ for (const ruleResult of result.ruleResults) {
 }
 ```
 
-## Running Tests
-
-```bash
-npm test
-```
-
-The test suite includes fixture Apex classes, object metadata XML, and an `archguard.yml` that exercises all three rules with both valid and invalid dependencies.
+Custom rules can be registered by passing an array to `evaluateRules(graph, config, customRules)` directly.
 
 ## What This Tool Does NOT Do
 

@@ -6,7 +6,7 @@
  */
 
 import * as fs from 'fs';
-import { AnalysisResult } from '../types';
+import { AnalysisResult } from '../types.js';
 
 export function reportJson(result: AnalysisResult, outputPath?: string): string {
   const output = JSON.stringify(result, null, 2);

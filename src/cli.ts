@@ -10,9 +10,9 @@
 
 import { Command } from 'commander';
 import * as path from 'path';
-import { analyze } from './analyzer';
-import { report } from './reporters';
-import { ReportFormat } from './types';
+import { analyze } from './analyzer.js';
+import { report } from './reporters/index.js';
+import { ReportFormat } from './types.js';
 
 const program = new Command();
 

@@ -5,7 +5,7 @@
  */
 
 import chalk from 'chalk';
-import { AnalysisResult, Violation } from '../types';
+import { AnalysisResult, Violation } from '../types.js';
 
 export function reportConsole(result: AnalysisResult, verbose: boolean = false): void {
   const { ruleResults, totalViolations, graphSummary } = result;

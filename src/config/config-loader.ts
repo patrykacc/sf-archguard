@@ -8,7 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as YAML from 'yaml';
-import { ArchGuardConfig, RawArchGuardConfig, LayerDefinition, PackageDefinition } from '../types';
+import { ArchGuardConfig, RawArchGuardConfig, LayerDefinition, PackageDefinition } from '../types.js';
 
 const DEFAULT_CONFIG_FILENAMES = ['archguard.yml', 'archguard.yaml', '.archguard.yml'];
 

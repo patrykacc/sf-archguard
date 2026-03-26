@@ -14,7 +14,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
-import { GraphNode, GraphEdge, DependencyType, MetadataType } from '../types';
+import { GraphNode, GraphEdge, DependencyType, MetadataType } from '../types.js';
 
 export interface ApexParseResult {
   nodes: GraphNode[];
@@ -47,7 +47,7 @@ export async function parseApexPackage(
     const fullPath = path.join(absolutePath, file);
     const content = fs.readFileSync(fullPath, 'utf-8');
     const className = path.basename(file, '.cls');
-    const relativePath = path.join(packagePath, file);
+    const relativePath = path.join(packagePath, file).replace(/\\/g, '/');
 
     nodes.push({
       name: className,
@@ -71,7 +71,7 @@ export async function parseApexPackage(
     const fullPath = path.join(absolutePath, file);
     const content = fs.readFileSync(fullPath, 'utf-8');
     const triggerName = path.basename(file, '.trigger');
-    const relativePath = path.join(packagePath, file);
+    const relativePath = path.join(packagePath, file).replace(/\\/g, '/');
 
     nodes.push({
       name: triggerName,

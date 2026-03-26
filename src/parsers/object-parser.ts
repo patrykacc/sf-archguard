@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 import { XMLParser } from 'fast-xml-parser';
-import { GraphNode, GraphEdge, MetadataType } from '../types';
+import { GraphNode, GraphEdge, MetadataType } from '../types.js';
 
 export interface ObjectParseResult {
   nodes: GraphNode[];

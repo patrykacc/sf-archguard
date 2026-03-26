@@ -19,7 +19,7 @@ import {
   Violation,
   RuleResult,
   ViolationSeverity,
-} from '../types';
+} from '../types.js';
 
 // ─── Rule Interface ─────────────────────────────────────────
 

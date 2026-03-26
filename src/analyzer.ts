@@ -8,10 +8,10 @@
  *   4. Produce AnalysisResult
  */
 
-import { ArchGuardConfig, AnalysisResult } from './types';
-import { loadConfig } from './config/config-loader';
-import { buildDependencyGraph } from './graph/dependency-graph';
-import { evaluateRules } from './rules/rule-engine';
+import { ArchGuardConfig, AnalysisResult } from './types.js';
+import { loadConfig } from './config/config-loader.js';
+import { buildDependencyGraph } from './graph/dependency-graph.js';
+import { evaluateRules } from './rules/rule-engine.js';
 
 export interface AnalyzerOptions {
   projectRoot: string;

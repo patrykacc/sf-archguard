@@ -6,7 +6,7 @@
  */
 
 import * as fs from 'fs';
-import { AnalysisResult, Violation } from '../types';
+import { AnalysisResult, Violation } from '../types.js';
 
 export function reportJunit(result: AnalysisResult, outputPath?: string): string {
   const { ruleResults, totalViolations } = result;

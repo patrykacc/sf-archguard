@@ -6,9 +6,9 @@
  * known nodes (unresolved refs are tagged for optional warnings).
  */
 
-import { ArchGuardConfig, DependencyGraph, GraphNode, GraphEdge } from '../types';
-import { parseApexPackage } from '../parsers/apex-parser';
-import { parseObjectPackage } from '../parsers/object-parser';
+import { ArchGuardConfig, DependencyGraph, GraphNode, GraphEdge } from '../types.js';
+import { parseApexPackage } from '../parsers/apex-parser.js';
+import { parseObjectPackage } from '../parsers/object-parser.js';
 import { minimatch } from 'minimatch';
 
 export interface GraphBuildResult {

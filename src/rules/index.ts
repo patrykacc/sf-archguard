@@ -1,1 +1,1 @@
-export { evaluateRules, ArchRule } from './rule-engine';
+export { evaluateRules, ArchRule } from './rule-engine.js';

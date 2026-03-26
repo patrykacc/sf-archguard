@@ -1,1 +1,1 @@
-export { buildDependencyGraph, GraphBuildResult } from './dependency-graph';
+export { buildDependencyGraph, GraphBuildResult } from './dependency-graph.js';
