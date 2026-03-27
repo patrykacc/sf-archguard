@@ -12,8 +12,20 @@ SF-ArchGuard focuses exclusively on **structural and architectural rules**. It d
 
 ## Installation
 
+**As a Salesforce CLI plugin** (recommended for SFDX projects):
 ```bash
 sf plugins install sf-archguard
+```
+
+**As a standalone global CLI**:
+```bash
+npm install -g sf-archguard
+sf-archguard --help
+```
+
+**As a library** (for programmatic use — see [Programmatic API](#programmatic-api)):
+```bash
+npm install sf-archguard
 ```
 
 ## Quick Start
@@ -80,6 +92,44 @@ sf archguard enforce --format junit --output archguard-report.xml
 | `--output <path>` | `-o` | Write report to file (json/junit) | stdout |
 | `--verbose` | `-v` | Show full violation messages | `false` |
 | `--[no-]fail-on-violation` | | Exit code 1 on violations | `true` |
+
+### Standalone CLI: `sf-archguard`
+
+When installed globally via `npm install -g sf-archguard`, use the `sf-archguard` command directly (no Salesforce CLI required):
+
+| Flag | Short | Description | Default |
+|---|---|---|---|
+| `--project <path>` | `-p` | Project root directory | Current directory |
+| `--config <path>` | `-c` | Path to `archguard.yml` | Auto-detected in project root |
+| `--format <format>` | `-f` | Output: `console`, `json`, or `junit` | `console` |
+| `--output <path>` | `-o` | Write report to file (json/junit) | stdout |
+| `--verbose` | `-v` | Verbose output | `false` |
+| `--[no-]fail-on-violation` | | Exit code 1 on violations | `true` |
+
+```bash
+sf-archguard --project ./myproject --format junit --output archguard-report.xml
+```
+
+> Note: the standalone CLI uses `--project` while the SF plugin uses `--project-dir`. Both accept the same path.
+
+## CI Integration
+
+Use the JUnit output format to surface violations in any CI pipeline:
+
+**GitHub Actions:**
+```yaml
+- name: Enforce architecture
+  run: sf archguard enforce --format junit --output archguard-report.xml
+
+- name: Publish test results
+  uses: mikepenz/action-junit-report@v4
+  if: always()
+  with:
+    report_paths: archguard-report.xml
+    check_name: Architecture Violations
+```
+
+**Fail the build on violations** (default `--fail-on-violation` is `true`; disable with `--no-fail-on-violation` for report-only mode).
 
 ## How Dependency Rules Work
 

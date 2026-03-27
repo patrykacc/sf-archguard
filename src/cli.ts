@@ -8,18 +8,22 @@
  *   sf-archguard --format junit --output report.xml
  */
 
+import { createRequire } from 'module';
 import { Command } from 'commander';
 import * as path from 'path';
 import { analyze } from './analyzer.js';
 import { report } from './reporters/index.js';
 import { ReportFormat } from './types.js';
 
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
+
 const program = new Command();
 
 program
   .name('sf-archguard')
   .description('Architecture enforcement for Salesforce SFDX projects')
-  .version('0.1.0')
+  .version(version)
   .option('-p, --project <path>', 'Project root directory', process.cwd())
   .option('-c, --config <path>', 'Path to archguard.yml config file')
   .option(

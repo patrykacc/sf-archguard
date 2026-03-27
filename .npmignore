@@ -1,0 +1,12 @@
+src/
+tests/
+IlluminatedCloud/
+tsconfig.json
+jest.config.cjs
+archguard.example.yml
+.eslintrc*
+CLAUDE.md
+.vscode/
+.idea/
+dist/**/*.map
+dist/**/*.d.ts.map
