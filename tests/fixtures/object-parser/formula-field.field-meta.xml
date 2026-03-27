@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <fullName>DerivedAmount__c</fullName>
+    <label>Derived Amount</label>
+    <type>Formula</type>
+    <formula>Payment__r.Amount__c + Invoice__c.Amount__c + Payment__r.Amount__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+</CustomField>

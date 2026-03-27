@@ -103,7 +103,10 @@ function parseFieldMetadata(
     const content = fs.readFileSync(filePath, 'utf-8');
     const parsed = xmlParser.parse(content);
     const field = parsed?.CustomField;
-    if (!field) return edges;
+    if (!field) {
+      console.warn(`Warning: Could not parse field metadata at ${filePath}: missing CustomField root`);
+      return edges;
+    }
 
     // Lookup and Master-Detail relationships
     const fieldType = field.type;

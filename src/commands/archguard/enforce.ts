@@ -8,6 +8,64 @@ import { ReportFormat, AnalysisResult } from '../../types.js';
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-archguard', 'archguard.enforce');
 
+export interface EnforceFlags {
+  'project-dir': string;
+  config?: string;
+  format: ReportFormat;
+  output?: string;
+  verbose: boolean;
+  'fail-on-violation': boolean;
+}
+
+export interface EnforceCommandDependencies {
+  analyze: typeof analyze;
+  report: typeof report;
+}
+
+export interface EnforceExecutionResult {
+  result: AnalysisResult;
+  summary?: string;
+  exitCode?: number;
+}
+
+const defaultDependencies: EnforceCommandDependencies = {
+  analyze,
+  report,
+};
+
+export async function executeEnforce(
+  flags: EnforceFlags,
+  dependencies: EnforceCommandDependencies = defaultDependencies
+): Promise<EnforceExecutionResult> {
+  const projectRoot = path.resolve(flags['project-dir']);
+  const format = flags.format as ReportFormat;
+
+  const result = await dependencies.analyze({
+    projectRoot,
+    configPath: flags.config,
+    verbose: flags.verbose,
+  });
+
+  dependencies.report(result, {
+    format,
+    outputPath: flags.output,
+    verbose: flags.verbose,
+  });
+
+  let summary: string | undefined;
+  if (format === 'console') {
+    summary = result.totalViolations > 0
+      ? `\nFound ${result.totalViolations} architecture violation(s) across ${result.totalEdgesAnalyzed} dependencies.`
+      : `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`;
+  }
+
+  return {
+    result,
+    summary,
+    exitCode: result.totalViolations > 0 && flags['fail-on-violation'] ? 1 : undefined,
+  };
+}
+
 export default class ArchguardEnforce extends SfCommand<AnalysisResult> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
@@ -49,37 +107,16 @@ export default class ArchguardEnforce extends SfCommand<AnalysisResult> {
   public async run(): Promise<AnalysisResult> {
     const { flags } = await this.parse(ArchguardEnforce);
 
-    const projectRoot = path.resolve(flags['project-dir']);
-    const format = flags.format as ReportFormat;
+    const execution = await executeEnforce(flags as EnforceFlags);
 
-    const result = await analyze({
-      projectRoot,
-      configPath: flags.config,
-      verbose: flags.verbose,
-    });
-
-    report(result, {
-      format,
-      outputPath: flags.output,
-      verbose: flags.verbose,
-    });
-
-    if (format === 'console') {
-      if (result.totalViolations > 0) {
-        this.log(
-          `\nFound ${result.totalViolations} architecture violation(s) across ${result.totalEdgesAnalyzed} dependencies.`
-        );
-      } else {
-        this.log(
-          `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`
-        );
-      }
+    if (execution.summary) {
+      this.log(execution.summary);
     }
 
-    if (result.totalViolations > 0 && flags['fail-on-violation']) {
+    if (execution.exitCode === 1) {
       this.error('Architecture violations detected.', { exit: 1 });
     }
 
-    return result;
+    return execution.result;
   }
 }

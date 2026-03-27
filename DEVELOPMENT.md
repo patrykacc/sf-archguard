@@ -160,20 +160,16 @@ tests/
 1. Bump the version in `package.json`
 2. Run the full build and test suite:
    ```bash
-   npm run build && npm test
+   npm run release:check
    ```
-3. Pack to verify the published artifact:
-   ```bash
-   npm pack --dry-run
-   ```
-   Check that only `dist/`, `messages/`, and root metadata files are included.
-4. Publish to the npm registry (the SF plugin registry uses npm):
+3. Publish to the npm registry (the SF plugin registry uses npm):
    ```bash
    npm publish --access public
    ```
-5. Tag the release:
+4. Tag and push the release:
    ```bash
-   git tag v0.x.x && git push --tags
+   git tag v0.x.x
+   git push --follow-tags
    ```
 
 Users can then install the released version with:
