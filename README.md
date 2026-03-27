@@ -61,6 +61,55 @@ rules:
     - "**/*Mock.cls"
 ```
 
+## When To Use It
+
+SF-ArchGuard is most useful when a Salesforce codebase is split into multiple logical modules that should be developed and deployed separately, while still living in the same repository and SFDX project.
+
+Typical cases:
+
+- Large orgs with distinct domains such as billing, payments, CRM, or notifications
+- Teams trying to keep deployments fast by shipping only the affected module
+- Projects getting close to Salesforce deployment scale limits, including the 10,000-component limit for a single deployment
+- Repositories where architectural boundaries are defined up front, but tend to erode over time during normal feature work
+
+Without automated boundary checks, one module can quietly start depending on another in ways that make separate deployment harder. That usually shows up later as slow deployments, unexpected metadata coupling, or an inability to deploy a large package cleanly because too many components now need to move together.
+
+## Example Project Structure
+
+One common setup is a single repo with subfolders representing modules that should remain independently deployable:
+
+```text
+force-app/
+  main/
+    default/
+      billing/
+      payments/
+      crm/
+      notifications/
+      core-domain/
+      common/
+```
+
+Example intent for those folders:
+
+- `billing` contains invoice and receivables logic
+- `payments` contains payment gateway integrations
+- `crm` contains customer service workflows
+- `notifications` contains email, SMS, or platform event delivery
+- `core-domain` contains reusable business entities and domain logic
+- `common` contains shared technical utilities
+
+In that structure, `payments` may be allowed to depend on `billing`, and both may use `common`, but `common` should not depend on `payments`. A CRM module also should not reach into billing internals just because both folders sit under the same SFDX source tree.
+
+SF-ArchGuard makes those boundaries executable during development, before dependency drift turns into deployment coupling.
+
+When the codebase is split well and those boundaries are actively governed, teams usually get practical delivery benefits as well:
+
+- Easier packaging and clearer ownership of what belongs in each package
+- Easier multi-stream development, because teams can work in parallel with less accidental overlap
+- More scratch-org-friendly development, since smaller and cleaner module scopes are easier to push and validate
+- More deployment-friendly release flows, because the deployable unit stays smaller and more predictable
+
 Run the analysis:
 
 ```bash
@@ -157,6 +206,8 @@ integration  -->  service  -->  domain  -->  shared
 **Package-level `dependsOn`** adds specific exceptions. If `payments` declares `dependsOn: [billing]`, then classes in the payments package can reference billing classes regardless of layer rules.
 
 Same-package references are always allowed — classes within a single package can freely reference each other.
+
+This is especially useful when packages map to deployment units. Keeping dependencies limited to approved layers and explicitly declared package links helps preserve smaller deployment scopes and reduces the risk that unrelated modules must be deployed together.
 
 ## What Gets Analyzed
 
