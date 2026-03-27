@@ -1,2 +1,16 @@
 node_modules/
 dist/
+.idea/
+*.iml
+
+# Added by Illuminated Cloud
+.sf/
+.sfdx/
+.localdev/
+/IlluminatedCloud/
+/out/
+target/
+/.illuminatedCloud/
+**/tsconfig*.json
+**/*.tsbuildinfo
+**/graphql.config.yml
