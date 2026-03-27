@@ -26,6 +26,11 @@ import {
   FromNameListContext,
   PrimaryExpressionContext,
   IdPrimaryContext,
+  FieldDeclarationContext,
+  FormalParameterContext,
+  LocalVariableDeclarationContext,
+  MethodDeclarationContext,
+  ConstructorDeclarationContext,
 } from '@apexdevtools/apex-parser';
 import { GraphNode, GraphEdge, DependencyType, MetadataType } from '../types.js';
 
@@ -73,16 +78,80 @@ const STANDARD_TYPES = new Set([
 /**
  * Visits an Apex parse tree and collects all outbound dependency references.
  * Each instance is single-use (one class or trigger file).
+ *
+ * Symbol table design:
+ *   - classFields: variable name → declared type, populated from field declarations,
+ *     persists for the whole class.
+ *   - methodScope: variable name → declared type, populated from method/constructor
+ *     parameters and local variable declarations, reset on each method/constructor entry.
+ *
+ * Together these let visitDotExpression resolve whether a receiver identifier is a
+ * known variable (skip) or an unresolved uppercase name (treat as class / static call),
+ * removing the need for the pure-uppercase heuristic in the common cases.
  */
 class DependencyVisitor extends ApexParserBaseVisitor<void> {
   readonly refs: ParsedReference[] = [];
   private readonly seen = new Set<string>();
   private readonly selfName: string;
 
+  /** Class-level field names → declared type (populated once, never cleared). */
+  private readonly classFields = new Map<string, string>();
+  /** Current method/constructor scope: param + local variable names → declared type. */
+  private methodScope = new Map<string, string>();
+
   constructor(selfName: string) {
     super();
     this.selfName = selfName;
   }
+
+  // ── Symbol table population ──────────────────────────────────────────────
+
+  /** Records class fields so dot-expression receivers can be identified as variables. */
+  visitFieldDeclaration = (ctx: FieldDeclarationContext): void => {
+    const typeName = this.rootIdOf(ctx.typeRef());
+    if (typeName) {
+      for (const decl of ctx.variableDeclarators().variableDeclarator_list()) {
+        this.classFields.set(decl.id().getText(), typeName);
+      }
+    }
+    this.visitChildren(ctx);
+  };
+
+  /** Resets the method scope and records parameters before visiting the body. */
+  visitMethodDeclaration = (ctx: MethodDeclarationContext): void => {
+    this.methodScope = new Map();
+    const params = ctx.formalParameters()?.formalParameterList()?.formalParameter_list() ?? [];
+    for (const p of params) this.recordParam(p);
+    const body = ctx.block();
+    if (body) this.visit(body);
+  };
+
+  /** Resets the method scope and records parameters before visiting the body. */
+  visitConstructorDeclaration = (ctx: ConstructorDeclarationContext): void => {
+    this.methodScope = new Map();
+    const params = ctx.formalParameters()?.formalParameterList()?.formalParameter_list() ?? [];
+    for (const p of params) this.recordParam(p);
+    const body = ctx.block();
+    if (body) this.visit(body);
+  };
+
+  /** Records local variable declarations into the current method scope. */
+  visitLocalVariableDeclaration = (ctx: LocalVariableDeclarationContext): void => {
+    const typeName = this.rootIdOf(ctx.typeRef());
+    if (typeName) {
+      for (const decl of ctx.variableDeclarators().variableDeclarator_list()) {
+        this.methodScope.set(decl.id().getText(), typeName);
+      }
+    }
+    this.visitChildren(ctx);
+  };
+
+  private recordParam(p: FormalParameterContext): void {
+    const typeName = this.rootIdOf(p.typeRef());
+    if (typeName) this.methodScope.set(p.id().getText(), typeName);
+  }
+
+  // ── Dependency extraction ────────────────────────────────────────────────
 
   /**
    * Handles class declaration header: extracts extends/implements as inheritance edges,
@@ -141,17 +210,31 @@ class DependencyVisitor extends ApexParserBaseVisitor<void> {
 
   /**
    * Captures static method calls: ClassName.methodName(...)
-   * Only fires when the receiver is a simple uppercase identifier
-   * (heuristic to distinguish class names from variable names).
+   *
+   * Resolution order:
+   *   1. Known variable in method scope (param or local var) → skip (instance call)
+   *   2. Known class field → skip (instance call)
+   *   3. Known standard Salesforce type → skip
+   *   4. Starts with uppercase → treat as class name (static call)
+   *
+   * The uppercase fallback still handles cases where the receiver type is
+   * unresolvable without cross-file analysis (e.g. inherited fields, method
+   * return type chaining).
    */
   visitDotExpression = (ctx: DotExpressionContext): void => {
     if (ctx.dotMethodCall()) {
       const expr = ctx.expression();
-      if (expr instanceof PrimaryExpressionCo/ntext) {
+      if (expr instanceof PrimaryExpressionContext) {
         const primary = expr.primary();
         if (primary instanceof IdPrimaryContext) {
           const name = primary.id().getText();
-          if (name && /^[A-Z]/.test(name) && !STANDARD_TYPES.has(name)) {
+          if (
+            name &&
+            !this.methodScope.has(name) &&
+            !this.classFields.has(name) &&
+            !STANDARD_TYPES.has(name) &&
+            /^[A-Z]/.test(name)
+          ) {
             this.addRef(name, 'method-invocation', ctx.start.line);
           }
         }
