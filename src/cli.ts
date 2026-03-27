@@ -34,6 +34,7 @@ program
   .option('-o, --output <path>', 'Output file path (for json/junit formats)')
   .option('-v, --verbose', 'Verbose output with detailed violation messages', false)
   .option('--fail-on-violation', 'Exit with code 1 if violations are found (default: true)', true)
+  .option('--no-fail-on-violation', 'Do not exit with code 1 when violations are found')
   .action(async (options) => {
     try {
       const projectRoot = path.resolve(options.project);

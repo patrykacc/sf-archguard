@@ -13,7 +13,6 @@ export function reportJson(result: AnalysisResult, outputPath?: string): string 
 
   if (outputPath) {
     fs.writeFileSync(outputPath, output, 'utf-8');
-    console.log(`JSON report written to: ${outputPath}`);
   }
 
   return output;

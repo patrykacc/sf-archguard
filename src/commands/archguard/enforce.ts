@@ -64,17 +64,20 @@ export default class ArchguardEnforce extends SfCommand<AnalysisResult> {
       verbose: flags.verbose,
     });
 
-    if (result.totalViolations > 0) {
-      this.log(
-        `\nFound ${result.totalViolations} architecture violation(s) across ${result.totalEdgesAnalyzed} dependencies.`
-      );
-      if (flags['fail-on-violation']) {
-        this.error('Architecture violations detected.', { exit: 1 });
+    if (format === 'console') {
+      if (result.totalViolations > 0) {
+        this.log(
+          `\nFound ${result.totalViolations} architecture violation(s) across ${result.totalEdgesAnalyzed} dependencies.`
+        );
+      } else {
+        this.log(
+          `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`
+        );
       }
-    } else {
-      this.log(
-        `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`
-      );
+    }
+
+    if (result.totalViolations > 0 && flags['fail-on-violation']) {
+      this.error('Architecture violations detected.', { exit: 1 });
     }
 
     return result;

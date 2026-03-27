@@ -44,7 +44,6 @@ ${testSuites.join('\n')}
 
   if (outputPath) {
     fs.writeFileSync(outputPath, xml, 'utf-8');
-    console.log(`JUnit XML report written to: ${outputPath}`);
   }
 
   return xml;

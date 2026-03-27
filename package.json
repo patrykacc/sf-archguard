@@ -4,6 +4,7 @@
   "description": "ArchUnit-style architecture enforcement for Salesforce SFDX projects",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "sf-archguard": "dist/cli.js"
   },
@@ -11,9 +12,12 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.cjs",
-    "lint": "eslint src/**/*.ts",
-    "prepublishOnly": "npm run build && npm test"
+    "lint": "npm run typecheck",
+    "pack:check": "npm pack --dry-run",
+    "release:check": "npm run build && npm run lint && npm test && npm run pack:check",
+    "prepublishOnly": "npm run release:check"
   },
   "keywords": [
     "salesforce",
@@ -28,6 +32,9 @@
     "static-analysis"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "oclif": {
     "commands": "./dist/commands",
     "bin": "sf",
@@ -45,6 +52,7 @@
   "files": [
     "dist",
     "messages",
+    "LICENSE",
     "!dist/**/*.map"
   ],
   "dependencies": {

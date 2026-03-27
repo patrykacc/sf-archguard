@@ -131,6 +131,17 @@ Use the JUnit output format to surface violations in any CI pipeline:
 
 **Fail the build on violations** (default `--fail-on-violation` is `true`; disable with `--no-fail-on-violation` for report-only mode).
 
+## Release Process
+
+Releases should be published from GitHub Actions, not from a developer workstation.
+
+1. Update the version with `npm version patch`, `npm version minor`, or `npm version major`.
+2. Update [CHANGELOG.md](./CHANGELOG.md) for the new version.
+3. Push the version commit and tag with `git push --follow-tags`.
+4. The `Release` workflow publishes the tagged version to npm after running the full verification suite.
+
+The release workflow is configured for npm trusted publishing. Before the first release, connect this GitHub repository to the npm package in the npm trusted publishing settings.
+
 ## How Dependency Rules Work
 
 Dependencies are allowed based on two mechanisms working together:
