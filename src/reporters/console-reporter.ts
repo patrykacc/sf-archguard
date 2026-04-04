@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import { AnalysisResult, Violation } from '../types.js';
 
 export function reportConsole(result: AnalysisResult, verbose: boolean = false): void {
-  const { ruleResults, totalViolations, graphSummary } = result;
+  const { ruleResults, totalViolations, totalErrors, totalWarnings, graphSummary } = result;
 
   // Header
   console.log('');
@@ -25,11 +25,22 @@ export function reportConsole(result: AnalysisResult, verbose: boolean = false):
 
   // Rule results
   for (const ruleResult of ruleResults) {
-    const count = ruleResult.violations.length;
-    const icon = count === 0 ? chalk.green('✓') : chalk.red('✗');
-    const countStr = count === 0
-      ? chalk.green('0 violations')
-      : chalk.red(`${count} violation${count > 1 ? 's' : ''}`);
+    const errors = ruleResult.violations.filter(v => v.severity === 'error').length;
+    const warnings = ruleResult.violations.filter(v => v.severity === 'warning').length;
+    const count = errors + warnings;
+    
+    let icon = chalk.green('✓');
+    if (errors > 0) icon = chalk.red('✗');
+    else if (warnings > 0) icon = chalk.yellow('⚠');
+
+    let countStr = chalk.green('0 violations');
+    if (errors > 0 && warnings > 0) {
+      countStr = `${chalk.red(`${errors} error${errors > 1 ? 's' : ''}`)}, ${chalk.yellow(`${warnings} warning${warnings > 1 ? 's' : ''}`)}`;
+    } else if (errors > 0) {
+      countStr = chalk.red(`${errors} error${errors > 1 ? 's' : ''}`);
+    } else if (warnings > 0) {
+      countStr = chalk.yellow(`${warnings} warning${warnings > 1 ? 's' : ''}`);
+    }
 
     console.log(`${icon} ${chalk.bold(ruleResult.ruleName)}: ${countStr} (${ruleResult.edgesChecked} edges checked)`);
 
@@ -43,12 +54,13 @@ export function reportConsole(result: AnalysisResult, verbose: boolean = false):
 
   // Summary
   console.log(chalk.dim('─'.repeat(50)));
-  if (totalViolations === 0) {
+  if (totalErrors === 0 && totalWarnings === 0) {
     console.log(chalk.green.bold('All architecture rules passed!'));
   } else {
-    console.log(
-      chalk.red.bold(`${totalViolations} total violation${totalViolations > 1 ? 's' : ''} found.`)
-    );
+    const summaryParts = [];
+    if (totalErrors > 0) summaryParts.push(chalk.red.bold(`${totalErrors} error${totalErrors > 1 ? 's' : ''}`));
+    if (totalWarnings > 0) summaryParts.push(chalk.yellow.bold(`${totalWarnings} warning${totalWarnings > 1 ? 's' : ''}`));
+    console.log(`Found ${summaryParts.join(' and ')}.`);
   }
   console.log('');
 }

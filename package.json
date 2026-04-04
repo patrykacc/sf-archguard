@@ -1,6 +1,6 @@
 {
   "name": "sf-archguard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "ArchUnit-style architecture enforcement for Salesforce SFDX projects",
   "type": "module",
   "main": "dist/index.js",
@@ -57,6 +57,7 @@
   ],
   "dependencies": {
     "@apexdevtools/apex-parser": "5.0.0-beta.5",
+    "@inquirer/prompts": "^8.3.2",
     "@oclif/core": "^4.9.0",
     "@salesforce/core": "^8.27.0",
     "@salesforce/sf-plugins-core": "^12.2.6",

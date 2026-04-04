@@ -30,7 +30,19 @@ npm install sf-archguard
 
 ## Quick Start
 
-Create an `archguard.yml` in your SFDX project root (see `archguard.example.yml` for a full template):
+You can generate a starter configuration file by running:
+
+```bash
+sf archguard init
+```
+
+Or, if using the standalone CLI:
+
+```bash
+sf-archguard init
+```
+
+This will create an `archguard.yml` in your project root (see `archguard.example.yml` for a full template):
 
 ```yaml
 layers:
@@ -180,6 +192,8 @@ Use the JUnit output format to surface violations in any CI pipeline:
 
 **Fail the build on violations** (default `--fail-on-violation` is `true`; disable with `--no-fail-on-violation` for report-only mode).
 
+> **Coming Soon:** A dedicated public GitHub Action is in development. It will provide a turnkey setup without needing to write bash scripts, and will natively annotate your pull requests with architectural violations inline!
+
 ## How Dependency Rules Work
 
 Dependencies are allowed based on two mechanisms working together:
@@ -225,6 +239,14 @@ SF-ArchGuard is intentionally narrow in scope. The following are handled by othe
 - SOQL injection detection (use PMD)
 - Naming conventions (use PMD)
 - Governor limit analysis (use Salesforce Scanner)
+
+## Community and Contributing
+
+We welcome contributions from the community! Whether it's reporting a bug, proposing a feature, or submitting a pull request, your input helps make `sf-archguard` better.
+
+- **Report Bugs & Request Features:** Please use our GitHub Issue Tracker. We have templates for bug reports and feature requests to make it easier for you to provide the necessary information.
+- **Contribute Code:** Read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide for details on our development process and the steps for submitting pull requests.
+- **Code of Conduct:** Please review and adhere to our [Code of Conduct](./CODE_OF_CONDUCT.md) to ensure a welcoming and inclusive environment for everyone.
 
 ## License
 

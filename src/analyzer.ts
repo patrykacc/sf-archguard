@@ -52,6 +52,14 @@ export async function analyze(options: AnalyzerOptions): Promise<AnalysisResult>
     (sum, r) => sum + r.violations.length,
     0
   );
+  const totalErrors = ruleResults.reduce(
+    (sum, r) => sum + r.violations.filter(v => v.severity === 'error').length,
+    0
+  );
+  const totalWarnings = ruleResults.reduce(
+    (sum, r) => sum + r.violations.filter(v => v.severity === 'warning').length,
+    0
+  );
   const totalEdgesAnalyzed = ruleResults.reduce(
     (sum, r) => sum + r.edgesChecked,
     0
@@ -60,6 +68,8 @@ export async function analyze(options: AnalyzerOptions): Promise<AnalysisResult>
   return {
     ruleResults,
     totalViolations,
+    totalErrors,
+    totalWarnings,
     totalEdgesAnalyzed,
     graphSummary: {
       nodeCount: graph.nodes.size,

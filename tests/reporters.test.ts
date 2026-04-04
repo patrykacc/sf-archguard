@@ -27,7 +27,9 @@ const sampleResult: AnalysisResult = {
       edgesChecked: 3,
     },
   ],
-  totalViolations: 1,
+  totalViolations: 2,
+  totalErrors: 2,
+  totalWarnings: 0,
   totalEdgesAnalyzed: 3,
   graphSummary: {
     nodeCount: 2,

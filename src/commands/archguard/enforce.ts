@@ -54,15 +54,17 @@ export async function executeEnforce(
 
   let summary: string | undefined;
   if (format === 'console') {
-    summary = result.totalViolations > 0
-      ? `\nFound ${result.totalViolations} architecture violation(s) across ${result.totalEdgesAnalyzed} dependencies.`
-      : `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`;
+    if (result.totalErrors > 0 || result.totalWarnings > 0) {
+      summary = `\nFound ${result.totalErrors} error(s) and ${result.totalWarnings} warning(s) across ${result.totalEdgesAnalyzed} dependencies.`;
+    } else {
+      summary = `\nNo violations found. Checked ${result.totalEdgesAnalyzed} dependencies across ${result.graphSummary.packageCount} packages.`;
+    }
   }
 
   return {
     result,
     summary,
-    exitCode: result.totalViolations > 0 && flags['fail-on-violation'] ? 1 : undefined,
+    exitCode: result.totalErrors > 0 && flags['fail-on-violation'] ? 1 : undefined,
   };
 }
 
@@ -114,7 +116,7 @@ export default class ArchguardEnforce extends SfCommand<AnalysisResult> {
     }
 
     if (execution.exitCode === 1) {
-      this.error('Architecture violations detected.', { exit: 1 });
+      this.error('Architecture errors detected.', { exit: 1 });
     }
 
     return execution.result;

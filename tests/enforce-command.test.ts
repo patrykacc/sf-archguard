@@ -8,7 +8,9 @@ import { AnalysisResult } from '../src/types';
 function createResult(totalViolations = 0): AnalysisResult {
   return {
     ruleResults: [],
-    totalViolations,
+    totalViolations: totalViolations,
+    totalErrors: totalViolations,
+    totalWarnings: 0,
     totalEdgesAnalyzed: 5,
     graphSummary: {
       nodeCount: 4,
@@ -64,7 +66,7 @@ describe('executeEnforce', () => {
       report: jest.fn(),
     });
 
-    expect(execution.summary).toBe('\nFound 2 architecture violation(s) across 5 dependencies.');
+    expect(execution.summary).toBe('\nFound 2 error(s) and 0 warning(s) across 5 dependencies.');
     expect(execution.exitCode).toBe(1);
   });
 

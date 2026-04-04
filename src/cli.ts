@@ -11,10 +11,13 @@
 import { createRequire } from 'module';
 import { Command } from 'commander';
 import * as path from 'path';
+import * as fs from 'fs';
 import { fileURLToPath } from 'url';
+import { confirm, input } from '@inquirer/prompts';
 import { analyze } from './analyzer.js';
 import { report } from './reporters/index.js';
 import { AnalysisResult, ReportFormat } from './types.js';
+import { executeInit, readSfdxPackageDirectories } from './commands/archguard/init.js';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
@@ -46,6 +49,7 @@ export async function runCli(
     .name('sf-archguard')
     .description('Architecture enforcement for Salesforce SFDX projects')
     .version(version)
+    // Default action options (for enforce)
     .option('-p, --project <path>', 'Project root directory', process.cwd())
     .option('-c, --config <path>', 'Path to archguard.yml config file')
     .option(
@@ -74,9 +78,71 @@ export async function runCli(
           verbose: options.verbose,
         });
 
-        if (options.failOnViolation && result.totalViolations > 0) {
+        if (options.failOnViolation && result.totalErrors > 0) {
           exitCode = 1;
         }
+      } catch (err) {
+        dependencies.logError(`Error: ${(err as Error).message}`);
+        exitCode = 2;
+      }
+    });
+
+  // Init command
+  program
+    .command('init')
+    .description('Initialize a new archguard.yml configuration file (reads --project from top-level)')
+    .option('--source-dir <path>', 'Source directory to scan (overrides sfdx-project.json)')
+    .option('--no-scan', 'Skip package scanning; emit template only')
+    .action(async (options, command) => {
+      try {
+        // The --project flag is declared on the root program and shared across subcommands.
+        const rootOpts = (command.parent?.opts() ?? {}) as { project?: string };
+        const projectRoot = path.resolve(rootOpts.project ?? process.cwd());
+        const configPath = path.join(projectRoot, 'archguard.yml');
+
+        if (fs.existsSync(configPath)) {
+          dependencies.logError(`Error: Configuration file already exists at ${configPath}`);
+          exitCode = 1;
+          return;
+        }
+
+        let scan = options.scan !== false;
+        let sourceDir: string | undefined = options.sourceDir;
+
+        if (scan && !sourceDir) {
+          try {
+            scan = await confirm({
+              message: 'Scan your project for existing packages to auto-populate the config?',
+              default: true,
+            });
+            if (scan) {
+              const sfdxDirs = readSfdxPackageDirectories(projectRoot);
+              if (!sfdxDirs) {
+                console.log('No sfdx-project.json found — cannot read packageDirectories.');
+                sourceDir = await input({
+                  message: 'Enter the relative path to your source directory:',
+                  default: 'force-app',
+                });
+              } else {
+                console.log(`Will use packageDirectories from sfdx-project.json: ${sfdxDirs.join(', ')}`);
+              }
+            }
+          } catch {
+            // Non-TTY environment: fall back to non-interactive scan.
+            // If sfdx-project.json is absent, executeInit will emit the template.
+          }
+        }
+
+        executeInit(
+          { 'project-dir': projectRoot, scan, sourceDir },
+          {
+            log: (msg) => console.log(msg),
+            error: (msg) => {
+              dependencies.logError(`Error: ${msg}`);
+              exitCode = 1;
+            },
+          }
+        );
       } catch (err) {
         dependencies.logError(`Error: ${(err as Error).message}`);
         exitCode = 2;

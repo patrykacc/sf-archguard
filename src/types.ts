@@ -60,6 +60,12 @@ export interface GlobalRules {
 
   /** Glob patterns to exclude from analysis. */
   exclude?: string[];
+
+  /**
+   * Default severity for violations.
+   * Default: 'error'
+   */
+  severity?: ViolationSeverity;
 }
 
 // ─── Raw YAML Config (before resolution) ────────────────────
@@ -175,6 +181,12 @@ export interface AnalysisResult {
 
   /** Total violations across all rules */
   totalViolations: number;
+
+  /** Total errors across all rules */
+  totalErrors: number;
+
+  /** Total warnings across all rules */
+  totalWarnings: number;
 
   /** Total edges analyzed */
   totalEdgesAnalyzed: number;

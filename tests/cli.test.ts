@@ -5,7 +5,9 @@ import { AnalysisResult } from '../src/types';
 function createResult(totalViolations = 0): AnalysisResult {
   return {
     ruleResults: [],
-    totalViolations,
+    totalViolations: totalViolations,
+    totalErrors: totalViolations,
+    totalWarnings: 0,
     totalEdgesAnalyzed: 3,
     graphSummary: {
       nodeCount: 2,
