@@ -198,6 +198,11 @@ class ObjectBoundaryRule implements ArchRule {
     const layerAllowed = buildLayerAllowedDeps(config);
     const packageAllowed = buildPackageAllowedDeps(config);
     let edgesChecked = 0;
+    // Multiple lookup/field edges often connect the same source→target pair
+    // (e.g. an object with several lookups to the same target). Collapse them
+    // to one violation per (source, target, dependencyType) so reports and
+    // JUnit output don't contain duplicate entries with identical locations.
+    const seenViolations = new Set<string>();
 
     for (const edge of graph.edges) {
       const sourceNode = graph.nodes.get(edge.from);
@@ -224,6 +229,9 @@ class ObjectBoundaryRule implements ArchRule {
       );
 
       if (!isAllowed) {
+        const key = `${sourceNode.name}\u0000${targetNode.name}\u0000${edge.dependencyType}`;
+        if (seenViolations.has(key)) continue;
+        seenViolations.add(key);
         violations.push({
           rule: this.name,
           message: `Object boundary violation: "${sourceNode.name}" (${sourceNode.packageName}) has a relationship to "${targetNode.name}" (${targetNode.packageName}). This cross-package object dependency is not allowed.`,

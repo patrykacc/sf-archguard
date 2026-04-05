@@ -129,6 +129,11 @@ function validate(raw: RawArchGuardConfig): void {
     }
   }
 
+  // --- rules.severity ---
+  if (raw.rules?.severity !== undefined && raw.rules.severity !== 'error' && raw.rules.severity !== 'warning') {
+    errors.push(`\`rules.severity\` must be "error" or "warning" (got "${raw.rules.severity}").`);
+  }
+
   if (errors.length > 0) {
     throw new ConfigValidationError(errors);
   }
@@ -183,6 +188,7 @@ function resolveConfig(raw: RawArchGuardConfig, projectRoot: string): ArchGuardC
       enforcePackageBoundaries: raw.rules?.enforcePackageBoundaries ?? true,
       enforceObjectBoundaries: raw.rules?.enforceObjectBoundaries ?? true,
       exclude: raw.rules?.exclude ?? [],
+      severity: raw.rules?.severity ?? 'error',
     },
   };
 }

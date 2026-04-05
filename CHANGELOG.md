@@ -4,6 +4,11 @@ All notable changes to this project should be recorded here.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-05
+
+### Changed
+- Updated internal components and added path utility for improved parsing.
+
 ## [0.2.0] - 2026-04-04
 
 ### Added

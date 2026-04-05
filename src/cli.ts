@@ -93,6 +93,7 @@ export async function runCli(
     .description('Initialize a new archguard.yml configuration file (reads --project from top-level)')
     .option('--source-dir <path>', 'Source directory to scan (overrides sfdx-project.json)')
     .option('--no-scan', 'Skip package scanning; emit template only')
+    .option('-y, --yes', 'Skip confirmation prompts and proceed with scanning (for CI)', false)
     .action(async (options, command) => {
       try {
         // The --project flag is declared on the root program and shared across subcommands.
@@ -108,9 +109,26 @@ export async function runCli(
 
         let scan = options.scan !== false;
         let sourceDir: string | undefined = options.sourceDir;
+        const assumeYes = options.yes === true;
+        const isInteractive = process.stdin.isTTY === true && process.stdout.isTTY === true;
 
         if (scan && !sourceDir) {
-          try {
+          if (assumeYes) {
+            // --yes: proceed with scanning without prompting. If sfdx-project.json
+            // is missing, fall back to scanning the default force-app directory.
+            const sfdxDirs = readSfdxPackageDirectories(projectRoot);
+            if (!sfdxDirs) {
+              console.log('No sfdx-project.json found — defaulting source directory to "force-app".');
+              sourceDir = 'force-app';
+            } else {
+              console.log(`Will use packageDirectories from sfdx-project.json: ${sfdxDirs.join(', ')}`);
+            }
+          } else if (!isInteractive) {
+            console.log(
+              'Non-interactive environment detected; re-run with --yes to scan or --no-scan to skip package discovery.'
+            );
+            scan = false;
+          } else {
             scan = await confirm({
               message: 'Scan your project for existing packages to auto-populate the config?',
               default: true,
@@ -127,9 +145,6 @@ export async function runCli(
                 console.log(`Will use packageDirectories from sfdx-project.json: ${sfdxDirs.join(', ')}`);
               }
             }
-          } catch {
-            // Non-TTY environment: fall back to non-interactive scan.
-            // If sfdx-project.json is absent, executeInit will emit the template.
           }
         }
 

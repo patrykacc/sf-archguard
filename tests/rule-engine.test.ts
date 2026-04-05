@@ -290,6 +290,45 @@ describe('RuleEngine', () => {
       expect(objectRule?.violations.length).toBe(0);
       expect(objectRule?.edgesChecked).toBe(0);
     });
+
+    it('should dedup object-boundary violations for the same source→target pair', () => {
+      // Two packages in different layers with no dependsOn between them.
+      const customConfig: ArchGuardConfig = {
+        projectRoot: fixturesPath,
+        layers: [
+          { name: 'la', dependsOn: [] },
+          { name: 'lb', dependsOn: [] },
+        ],
+        packages: {
+          a: { path: 'a', layer: 'la', dependsOn: [] },
+          b: { path: 'b', layer: 'lb', dependsOn: [] },
+        },
+        rules: { enforcePackageBoundaries: true, enforceObjectBoundaries: true, exclude: [], severity: 'error' },
+      };
+
+      // Object in package "a" has three lookup fields pointing at the same target in package "b".
+      const customGraph: DependencyGraph = {
+        nodes: new Map([
+          ['Src__c', { name: 'Src__c', type: 'custom-object', packageName: 'a', filePath: 'a/Src__c.object-meta.xml' }],
+          ['Tgt__c', { name: 'Tgt__c', type: 'custom-object', packageName: 'b', filePath: 'b/Tgt__c.object-meta.xml' }],
+        ]),
+        edges: [
+          { from: 'Src__c', to: 'Tgt__c', dependencyType: 'lookup-relationship' },
+          { from: 'Src__c', to: 'Tgt__c', dependencyType: 'lookup-relationship' },
+          { from: 'Src__c', to: 'Tgt__c', dependencyType: 'lookup-relationship' },
+        ],
+      };
+
+      const results = evaluateRules(customGraph, customConfig);
+      const objectRule = results.find((r: any) => r.ruleName === 'object-boundary');
+      const dupViolations = objectRule?.violations.filter(
+        (v: any) => v.sourceNode === 'Src__c' && v.targetNode === 'Tgt__c'
+      );
+
+      expect(dupViolations?.length).toBe(1);
+      // edgesChecked still counts every edge examined, even though violations are collapsed.
+      expect(objectRule?.edgesChecked).toBe(3);
+    });
   });
 
   describe('full analysis pipeline', () => {

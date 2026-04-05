@@ -20,6 +20,7 @@ import * as path from 'path';
 import { glob } from 'glob';
 import { XMLParser } from 'fast-xml-parser';
 import { GraphNode, GraphEdge, MetadataType } from '../types.js';
+import { toPosixPath } from './path-utils.js';
 
 export interface ObjectParseResult {
   nodes: GraphNode[];
@@ -52,7 +53,7 @@ export async function parseObjectPackage(
   for (const metaFile of objectMetaFiles) {
     const objectDir = path.dirname(metaFile);
     const objectName = path.basename(objectDir);
-    const relativePath = path.join(packagePath, metaFile);
+    const relativePath = toPosixPath(path.join(packagePath, metaFile));
 
     nodes.push({
       name: objectName,
@@ -70,7 +71,7 @@ export async function parseObjectPackage(
     for (const fieldFile of fieldFiles) {
       const fieldFullPath = path.join(absolutePath, objectDir, fieldFile);
       const fieldName = path.basename(fieldFile, '.field-meta.xml');
-      const fieldRelativePath = path.join(packagePath, objectDir, fieldFile);
+      const fieldRelativePath = toPosixPath(path.join(packagePath, objectDir, fieldFile));
       const qualifiedFieldName = `${objectName}.${fieldName}`;
 
       nodes.push({

@@ -62,6 +62,66 @@ describe('ConfigLoader', () => {
       expect(Array.isArray(config.rules?.exclude)).toBe(true);
     });
 
+    it('should default severity to "error" when unspecified', () => {
+      const config = loadConfig(fixturesPath);
+      expect(config.rules?.severity).toBe('error');
+    });
+
+    it('should preserve severity: warning from config', () => {
+      const tempDir = path.join(fixturesPath, '..', 'temp-test-' + Date.now());
+      fs.mkdirSync(tempDir, { recursive: true });
+
+      try {
+        const yamlPath = path.join(tempDir, 'archguard.yml');
+        fs.writeFileSync(
+          yamlPath,
+          `layers:
+  - name: shared
+    dependsOn: []
+packages:
+  pkg1:
+    path: some/path
+    layer: shared
+rules:
+  severity: warning`
+        );
+
+        const config = loadConfig(tempDir);
+        expect(config.rules?.severity).toBe('warning');
+      } finally {
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true });
+        }
+      }
+    });
+
+    it('should reject invalid severity values', () => {
+      const tempDir = path.join(fixturesPath, '..', 'temp-test-' + Date.now());
+      fs.mkdirSync(tempDir, { recursive: true });
+
+      try {
+        const yamlPath = path.join(tempDir, 'archguard.yml');
+        fs.writeFileSync(
+          yamlPath,
+          `layers:
+  - name: shared
+    dependsOn: []
+packages:
+  pkg1:
+    path: some/path
+    layer: shared
+rules:
+  severity: critical`
+        );
+
+        expect(() => loadConfig(tempDir)).toThrow(ConfigValidationError);
+      } finally {
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true });
+        }
+      }
+    });
+
     it('should throw an error when config file does not exist', () => {
       const nonExistentPath = path.join(fixturesPath, '..', 'nonexistent-dir');
 

@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { confirm, input } from '@inquirer/prompts';
 import { glob } from 'glob';
+import { toPosixPath } from '../../parsers/path-utils.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-archguard', 'archguard.init');
@@ -98,7 +99,7 @@ export function discoverPackagesInRoot(
     .sort()
     .map(abs => ({
       name: path.basename(abs),
-      path: path.relative(projectRoot, abs).split(path.sep).join('/'),
+      path: toPosixPath(path.relative(projectRoot, abs)),
     }));
 }
 
@@ -310,36 +311,63 @@ export default class ArchguardInit extends SfCommand<void> {
       default: '.',
       exists: true,
     }),
+    yes: Flags.boolean({
+      char: 'y',
+      summary: 'Skip confirmation prompts and proceed with scanning (for CI).',
+      default: false,
+    }),
+    'no-scan': Flags.boolean({
+      summary: 'Skip package scanning; emit template only.',
+      default: false,
+    }),
+    'source-dir': Flags.directory({
+      summary: 'Source directory to scan (overrides sfdx-project.json).',
+    }),
   };
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(ArchguardInit);
     const projectRoot = path.resolve(flags['project-dir'] as string);
 
-    let scan = false;
-    let sourceDir: string | undefined;
+    const assumeYes = flags.yes === true;
+    const noScan = flags['no-scan'] === true;
+    let sourceDir: string | undefined = flags['source-dir'] as string | undefined;
+    const isInteractive = process.stdin.isTTY === true && process.stdout.isTTY === true;
 
-    try {
-      scan = await confirm({
-        message: 'Scan your project for existing packages to auto-populate the config?',
-        default: true,
-      });
+    let scan = !noScan;
 
-      if (scan) {
+    if (scan && !sourceDir) {
+      if (assumeYes) {
         const sfdxDirs = readSfdxPackageDirectories(projectRoot);
         if (!sfdxDirs) {
-          this.log('No sfdx-project.json found — cannot read packageDirectories.');
-          sourceDir = await input({
-            message: 'Enter the relative path to your source directory:',
-            default: 'force-app',
-          });
+          this.log('No sfdx-project.json found — defaulting source directory to "force-app".');
+          sourceDir = 'force-app';
         } else {
           this.log(`Will use packageDirectories from sfdx-project.json: ${sfdxDirs.join(', ')}`);
         }
+      } else if (!isInteractive) {
+        this.log(
+          'Non-interactive environment detected; re-run with --yes to scan or --no-scan to skip package discovery.'
+        );
+        scan = false;
+      } else {
+        scan = await confirm({
+          message: 'Scan your project for existing packages to auto-populate the config?',
+          default: true,
+        });
+        if (scan) {
+          const sfdxDirs = readSfdxPackageDirectories(projectRoot);
+          if (!sfdxDirs) {
+            this.log('No sfdx-project.json found — cannot read packageDirectories.');
+            sourceDir = await input({
+              message: 'Enter the relative path to your source directory:',
+              default: 'force-app',
+            });
+          } else {
+            this.log(`Will use packageDirectories from sfdx-project.json: ${sfdxDirs.join(', ')}`);
+          }
+        }
       }
-    } catch {
-      // Non-TTY environment: skip scanning.
-      scan = false;
     }
 
     const executeFlags: InitFlags = {
